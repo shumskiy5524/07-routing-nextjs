@@ -1,87 +1,57 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fetchNotes, FetchNotesParams } from '../../../../lib/api';
-import { Note } from '../../../../types/note';
-import SearchBox from '../../../../components/SearchBox/SearchBox';
-import Pagination from '../../../../components/Pagination/Pagination';
-import Modal from '../../../../components/Modal/Modal';
-import NoteForm from '../../../../components/NoteForm/NoteForm';
-import NoteList from '../../../../components/NoteList/NoteList';
+import { useState, useMemo } from 'react';
+import { Note } from '@/types/note';
+import SearchBox from '@/components/SearchBox/SearchBox';
+import Pagination from '@/components/Pagination/Pagination';
+import Modal from '@/components/Modal/Modal';
+import NoteForm from '@/components/NoteForm/NoteForm';
+import NoteList from '@/components/NoteList/NoteList';
 
 interface NotesClientProps {
-  tag?: string;
+  tag?: string;       
+  notes?: Note[];     
 }
 
-
-const queryClient = new QueryClient();
-
-export default function NotesClient({ tag }: NotesClientProps) {
-  
+export default function NotesClient({ tag, notes: initialNotes }: NotesClientProps) {
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
- 
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedSearch(search), 500);
-    return () => clearTimeout(handler);
-  }, [search]);
-
-  
-  const queryParams: FetchNotesParams = {
-    tag,
-    search: debouncedSearch,
-    page: currentPage,
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
   };
 
+  
+  const filteredNotes = useMemo(() => {
+    if (!initialNotes) return [];
+    return initialNotes
+      .filter((note) => !tag || tag === 'all' || note.tag === tag) 
+      .filter((note) => note.title.toLowerCase().includes(search.toLowerCase())); 
+  }, [initialNotes, search, tag]);
+
+  const totalPages = Math.ceil(filteredNotes.length / 10);
+  const paginatedNotes = filteredNotes.slice((currentPage - 1) * 10, currentPage * 10);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <div>
-       
-        <SearchBox value={search} onChange={setSearch} />
+    <div>
+      <SearchBox value={search} onChange={handleSearchChange} />
+      <button onClick={() => setIsModalOpen(true)}>Add Note</button>
 
-        <button onClick={() => setIsModalOpen(true)}>Add Note</button>
+      <NoteList notes={paginatedNotes} />
 
-       
-        <NotesList queryParams={queryParams} />
+      <Pagination
+        totalPages={totalPages}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
 
-        
-        <Pagination
-          totalPages={10}
-          currentPage={currentPage} onPageChange={setCurrentPage} />
-
-       
-        {isModalOpen && (
-          <Modal onClose={() => setIsModalOpen(false)}>
-            <NoteForm onSubmit={() => setIsModalOpen(false)}
-            onClose={() => setIsModalOpen(false)}/>
-          </Modal>
-        )}
-      </div>
-    </QueryClientProvider>
+      {isModalOpen && (
+        <Modal onClose={() => setIsModalOpen(false)}>
+          <NoteForm onSubmit={() => setIsModalOpen(false)} onClose={() => setIsModalOpen(false)} />
+        </Modal>
+      )}
+    </div>
   );
-}
-
-
-interface NotesListProps {
-  queryParams: FetchNotesParams;
-}
-
-function NotesList({ queryParams }: NotesListProps) {
-  const { data: notesData, isLoading } = useQuery<Note[], Error>({
-    queryKey: ['notes', queryParams],
-    queryFn: () => fetchNotes(queryParams).then(res => res.notes),
-    staleTime: 5000,
-    refetchOnWindowFocus: false,
-  });
-
-  const notes = notesData ?? [];
-
-  if (isLoading) return <p>Loading...</p>;
-  if (notes.length === 0) return <p>No notes found.</p>;
-
-  return <NoteList notes={notes} />;
 }
