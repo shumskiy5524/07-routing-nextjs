@@ -13,6 +13,7 @@ export interface FetchNotesParams {
   page?: number;
   perPage?: number;
   search?: string;
+  tag?: string; 
 }
 
 export interface FetchNotesResponse {
@@ -33,18 +34,15 @@ export const fetchNotes = async (
   return data;
 };
 
-
 export const createNote = async (note: NewNote): Promise<Note> => {
   const { data } = await axiosInstance.post<Note>("", note);
   return data;
 };
 
-
 export const deleteNote = async (id: string): Promise<Note> => {
   const { data } = await axiosInstance.delete<Note>(`${id}`);
   return data;
 };
-
 
 export const fetchNoteById = async (id: string): Promise<Note> => {
   const { data } = await axiosInstance.get<Note>(`${id}`);
