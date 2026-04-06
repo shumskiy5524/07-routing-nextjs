@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchNotes } from '@/lib/api';
 import { Note } from '@/types/note';
 import SearchBox from '@/components/SearchBox/SearchBox';
 import Pagination from '@/components/Pagination/Pagination';
@@ -8,48 +10,69 @@ import Modal from '@/components/Modal/Modal';
 import NoteForm from '@/components/NoteForm/NoteForm';
 import NoteList from '@/components/NoteList/NoteList';
 
-interface NotesClientProps {
-  tag?: string;       
-  notes?: Note[];     
+interface Props {
+  tag?: string;
 }
 
-export default function NotesClient({ tag, notes: initialNotes }: NotesClientProps) {
+interface NotesResponse {
+  notes: Note[];
+  totalPages: number;
+}
+
+export default function NotesClient({ tag }: Props) {
   const [search, setSearch] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setCurrentPage(1);
+    setPage(1);
   };
 
-  
-  const filteredNotes = useMemo(() => {
-    if (!initialNotes) return [];
-    return initialNotes
-      .filter((note) => !tag || tag === 'all' || note.tag === tag) 
-      .filter((note) => note.title.toLowerCase().includes(search.toLowerCase())); 
-  }, [initialNotes, search, tag]);
+  const { data, isLoading, isError } = useQuery<NotesResponse>({
+    queryKey: ['notes', tag, debouncedSearch, page],
+    queryFn: () =>
+      fetchNotes({
+        tag: tag === 'all' ? undefined : tag,
+        search: debouncedSearch,
+        page,
+      }),
+  });
 
-  const totalPages = Math.ceil(filteredNotes.length / 10);
-  const paginatedNotes = filteredNotes.slice((currentPage - 1) * 10, currentPage * 10);
+  const notes = data?.notes ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <div>
       <SearchBox value={search} onChange={handleSearchChange} />
+
       <button onClick={() => setIsModalOpen(true)}>Add Note</button>
 
-      <NoteList notes={paginatedNotes} />
+      {isLoading && <p>Loading...</p>}
+      {isError && <p>Error loading notes</p>}
+
+      {!isLoading && notes.length > 0 && <NoteList notes={notes} />}
+      {!isLoading && notes.length === 0 && <p>No notes found</p>}
 
       <Pagination
+        currentPage={page}
         totalPages={totalPages}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={setPage}
       />
 
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
-          <NoteForm onSubmit={() => setIsModalOpen(false)} onClose={() => setIsModalOpen(false)} />
+          <NoteForm
+            onSubmit={() => setIsModalOpen(false)}
+            onClose={() => setIsModalOpen(false)}
+          />
         </Modal>
       )}
     </div>
