@@ -1,15 +1,15 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 export default function NotesLayout({
   children,
-  sidebar, 
+  sidebar,
 }: {
   children: ReactNode;
   sidebar: ReactNode;
 }) {
   return (
-    <div style={{ display: 'flex', gap: '20px' }}>
-      <aside style={{ width: '250px' }}>{sidebar}</aside>
+    <div style={{ display: "flex" }}>
+      <aside style={{ width: "250px" }}>{sidebar}</aside>
       <main style={{ flex: 1 }}>{children}</main>
     </div>
   );

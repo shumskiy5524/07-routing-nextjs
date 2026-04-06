@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 interface Note {
@@ -16,18 +16,19 @@ interface NotePreviewProps {
 export default function NotePreview({ note }: NotePreviewProps) {
   const router = useRouter();
 
-  const handleClose = () => {
-    router.back(); 
-  };
+  
+  const handleClose = useCallback(() => {
+    router.back();
+  }, [router]);
 
- 
+  
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [handleClose]);
 
   return (
     <div
@@ -49,12 +50,22 @@ export default function NotePreview({ note }: NotePreviewProps) {
           borderRadius: "8px",
           maxWidth: "600px",
           width: "100%",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          position: "relative",
         }}
         onClick={(e) => e.stopPropagation()} 
       >
         <button
           onClick={handleClose}
-          style={{ float: "right", fontSize: "18px" }}
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "10px",
+            border: "none",
+            background: "transparent",
+            fontSize: "18px",
+            cursor: "pointer",
+          }}
         >
           ✕
         </button>
