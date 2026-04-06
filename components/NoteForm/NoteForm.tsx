@@ -9,6 +9,7 @@ import css from "./NoteForm.module.css";
 
 interface NoteFormProps {
   onClose: () => void;
+  onSubmit: () => void; 
 }
 
 interface FormValues {
@@ -23,7 +24,7 @@ const validationSchema = Yup.object({
   tag: Yup.mixed<NoteTag>().oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"]).required("Required"),
 });
 
-export default function NoteForm({ onClose }: NoteFormProps) {
+export default function NoteForm({ onClose, onSubmit }: NoteFormProps) {
   const queryClient = useQueryClient();
 
   
@@ -33,6 +34,7 @@ export default function NoteForm({ onClose }: NoteFormProps) {
       
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       onClose(); 
+      onSubmit();
     },
     onError: (error) => {
       console.error("Mutation error:", error);

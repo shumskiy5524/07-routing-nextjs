@@ -1,10 +1,15 @@
 
-import SidebarNotes from './@sidebar/SidebarNotes';
+import React from 'react';
 
-export default function FilterLayout({ children }: { children: React.ReactNode }) {
+type FilterLayoutProps = {
+  children: React.ReactNode;
+  sidebar: React.ReactNode;
+};
+
+export default function FilterLayout({ children, sidebar }: FilterLayoutProps) {
   return (
     <div style={{ display: 'flex', gap: '20px' }}>
-      <SidebarNotes />
+      <div>{sidebar}</div> 
       <div style={{ flex: 1 }}>{children}</div>
     </div>
   );

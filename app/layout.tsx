@@ -20,16 +20,20 @@ export const metadata: Metadata = {
   description: "Personal note management system",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+type RootLayoutProps = {
+  children: React.ReactNode;
+  modal?: React.ReactNode; 
+};
+
+export default function RootLayout({ children, modal }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <TanStackProvider>
           <Header />
           <main>{children}</main>
-          <Footer /> 
+          <Footer />
+          {modal && <div id="modal-root">{modal}</div>} 
         </TanStackProvider>
       </body>
     </html>

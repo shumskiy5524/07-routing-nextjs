@@ -1,45 +1,28 @@
-import React from "react";
+import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import FilteredNotesClient from './Notes.client';
+import { fetchNotes } from '../../../../lib/api';
 
-interface Note {
-  id: string;
-  title: string;
+async function getNotes(tag: string) {
+  const res = await fetchNotes({ tag });
+  return res.notes;
 }
 
-interface FilteredNotesParams {
-  tag?: string[];
-}
-
-async function fetchNotes(tag?: string): Promise<Note[]> {
-  let url = "/api/notes"; 
-  if (tag && tag !== "all") {
-    url += `?tag=${encodeURIComponent(tag)}`;
-  }
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch notes");
-  return res.json();
-}
-
-export default async function FilteredNotes({
+export default async function FilteredNotesPage({
   params,
 }: {
-  params: FilteredNotesParams;
+  params: { slug: string[] };
 }) {
-  const tagParam = params.tag?.[0] || "all"; 
-  const notes = await fetchNotes(tagParam);
+  const tag = params.slug?.[0] || 'all';
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h2>{tagParam === "all" ? "All Notes" : `Notes tagged "${tagParam}"`}</h2>
-      {notes.length === 0 ? (
-        <p>No notes found.</p>
-      ) : (
-        <ul>
-          {notes.map((note: Note) => (
-            <li key={note.id}>{note.title}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+  queryKey: ['notes', tag],
+  queryFn: () => getNotes(tag),
+});
+  const dehydratedState = dehydrate(queryClient);
+return (
+  <HydrationBoundary state={dehydratedState}>
+    <FilteredNotesClient tag={tag} />
+  </HydrationBoundary>
+);
 }

@@ -1,58 +1,38 @@
-
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import  Modal  from '../../../../components/Modal/Modal'; 
 import { Note } from '../../../../types/note';
 
 interface NotePreviewProps {
-  note: Note;
+  noteId: string;
 }
 
-export default function NotePreview({ note }: NotePreviewProps) {
+async function fetchNote(id: string): Promise<Note> {
+  const res = await fetch(`/api/notes/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch note');
+  return res.json();
+}
+
+export default function NotePreview({ noteId }: NotePreviewProps) {
   const router = useRouter();
 
+  const { data: note, isLoading, isError } = useQuery<Note, Error>({
+  queryKey: ['note', noteId],
+  queryFn: () => fetchNote(noteId),
+});
+
+  if (isLoading) return <Modal onClose={() => router.back()}>Loading...</Modal>;
+  if (isError || !note) return <Modal onClose={() => router.back()}>Error loading note.</Modal>;
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-      }}
-      onClick={() => router.back()}
-    >
-      <div
-        style={{
-          backgroundColor: '#fff',
-          padding: '20px',
-          borderRadius: '8px',
-          maxWidth: '600px',
-          width: '100%',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          position: 'relative',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={() => router.back()}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            border: 'none',
-            background: 'transparent',
-            fontSize: '18px',
-            cursor: 'pointer',
-          }}
-        >
-          ✕
-        </button>
-        <h2>{note.title}</h2>
-        <p>{note.content}</p>
-      </div>
-    </div>
+    <Modal onClose={() => router.back()}>
+      <h2>{note.title}</h2>
+      <p>{note.content}</p>
+      <p><strong>Tag:</strong> {note.tag}</p>
+      <p><strong>Created At:</strong> {new Date(note.createdAt).toLocaleString()}</p>
+    </Modal>
   );
 }
+
