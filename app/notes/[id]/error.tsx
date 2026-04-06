@@ -1,4 +1,3 @@
-
 "use client";
 
 export default function NoteDetailsError({ error }: { error: Error }) {

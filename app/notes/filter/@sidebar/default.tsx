@@ -1,24 +1,28 @@
 
-import Link from 'next/link';
-import css from './SidebarNotes.module.css';
+"use client"; 
+import React from "react";
+import Link from "next/link";
 
-const tags = ['Work', 'Personal', 'Shopping', 'Other'];
-
-export default function SidebarNotes() {
+const tags = ["Work", "Personal", "Ideas", "Shopping"]; 
+const SidebarNotes = () => {
   return (
-    <ul className={css.menuList}>
-      <li className={css.menuItem}>
-        <Link href="/notes/filter/all" className={css.menuLink}>
-          All notes
-        </Link>
-      </li>
-      {tags.map((tag) => (
-        <li key={tag} className={css.menuItem}>
-          <Link href={`/notes/filter/${tag}`} className={css.menuLink}>
-            {tag}
+    <aside style={{ padding: "20px", borderRight: "1px solid #ddd" }}>
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        <li style={{ marginBottom: "10px" }}>
+          <Link href={`/notes/filter/all`} style={{ textDecoration: "none", color: "#333" }}>
+            All notes
           </Link>
         </li>
-      ))}
-    </ul>
+        {tags.map((tag) => (
+          <li key={tag} style={{ marginBottom: "10px" }}>
+            <Link href={`/notes/filter/${tag}`} style={{ textDecoration: "none", color: "#333" }}>
+              {tag}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </aside>
   );
-}
+};
+
+export default SidebarNotes;
