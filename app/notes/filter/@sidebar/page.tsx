@@ -1,3 +1,4 @@
+
 import SidebarNotes from "./SidebarNotes";
 
 export default function Page() {
